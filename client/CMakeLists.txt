@@ -6,6 +6,7 @@ add_executable(
     client
 
     main.c
+    parse.c
 )
 
 include_directories(".")
