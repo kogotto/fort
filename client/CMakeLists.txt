@@ -7,6 +7,7 @@ add_executable(
 
     main.c
     parse.c
+    load.c
 )
 
 include_directories(".")
