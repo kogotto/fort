@@ -3,14 +3,8 @@
 
 #include <stdint.h>
 #include <stdio.h>
-#include <string.h>
 
-#define SUCCESS 0
-#define CAN_NOT_OPEN_FILE 1
-#define CAN_NOT_READ_FIELD 2
-
-#define MAX_CORES 32
-#define MAX_LINE 1024
+#include <defs.h>
 
 typedef struct {
     uint64_t user;

@@ -1,5 +1,9 @@
 #include <parse.h>
 
+#include <string.h>
+
+#define MAX_LINE 1024
+
 void printCoreInfo(CoreInfo* info) {
     printf("user: %lu\n", info->user);
     printf("nice: %lu\n", info->nice);
