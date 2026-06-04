@@ -4,12 +4,19 @@
 #include <netdb.h>
 #include <string.h>
 #include <stdarg.h>
+#include <signal.h>
 
 #include <parse.h>
 #include <load.h>
 
 #define CAN_NOT_WRITE_CHARS 1
 #define BUFFER_OVERFLOW 2
+
+volatile sig_atomic_t running = 1;
+
+void handleSignal(int sig) {
+    running = 0;
+}
 
 int syncPrint(const char* format, ...) {
     va_list list;
@@ -66,36 +73,56 @@ void* netTreadMain(void* param) {
 }
 
 int main() {
-    CpuInfo first;
-    switch (readProcStat(&first)) {
-    case 0:
-        printCpuInfo(&first);
-        break;
-    default:
-        printf("failure\n");
-        break;
-    }
-    sleep(1);
-    CpuInfo second;
-    switch (readProcStat(&second)) {
-    case 0:
-        printCpuInfo(&second);
-        break;
-    default:
-        printf("failure\n");
-        break;
-    }
+    int result = 0;
+    void* threadResult;
 
-    CpuLoad load = calculateCpuLoad(&first, &second);
-    printf("%.2f", load.all);
-    for (int i = 0; i < load.coreCount; ++i) {
-        printf(" %.2f", load.cores[i]);
+    struct sigaction act;
+
+    act.sa_handler = handleSignal;
+    sigemptyset(&act.sa_mask);
+    act.sa_flags = 0;
+
+    // Register the handler for the SIGINT signal (Ctrl+C)
+    if (sigaction(SIGINT, &act, NULL) < 0) {
+        perror("sigaction failed");
+        return 1;
     }
-    printf("\n");
 
     pthread_t netThread;
     pthread_create(&netThread, NULL, netTreadMain, NULL);
-    void* res;
-    pthread_join(netThread, &res);
+
+    CpuInfo first;
+    if (readProcStat(&first) != 0) {
+        result = 1;
+        goto clearup;
+    }
+    CpuInfo second;
+
+    CpuInfo* current = &second;
+    CpuInfo* previous = &first;
+
+    while (running) {
+        sleep(1);
+        if (readProcStat(current) != 0) {
+            result = 1;
+            goto clearup;
+        }
+
+        CpuLoad load = calculateCpuLoad(previous, current);
+        printf("%.2f:", load.all);
+        for (int i = 0; i < load.coreCount; ++i) {
+            printf(" %.2f", load.cores[i]);
+        }
+        printf("\n");
+
+        CpuInfo* tmp = current;
+        current = previous;
+        previous = tmp;
+    }
+
+clearup:
+    printf("before join");
+    pthread_join(netThread, &threadResult);
+
     return 0;
 }
