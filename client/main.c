@@ -1,11 +1,17 @@
 #include <stdio.h>
 #include <unistd.h>
+#include <pthread.h>
 
 #include <parse.h>
 #include <load.h>
 
 #define CAN_NOT_WRITE_CHARS 1
 #define BUFFER_OVERFLOW 2
+
+void* netTreadMain(void* param) {
+    printf("Hello from net thread");
+    return NULL;
+}
 
 int main() {
     CpuInfo first;
@@ -27,10 +33,16 @@ int main() {
         printf("failure\n");
         break;
     }
+
     CpuLoad load = calculateCpuLoad(&first, &second);
     printf("%.2f", load.all);
     for (int i = 0; i < load.coreCount; ++i) {
         printf(" %.2f", load.cores[i]);
     }
+
+    pthread_t thread;
+    pthread_create(&thread, NULL, netTreadMain, NULL);
+    void* res;
+    pthread_join(thread, &res);
     return 0;
 }
