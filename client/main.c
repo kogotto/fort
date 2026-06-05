@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <pthread.h>
 #include <netdb.h>
@@ -47,7 +48,16 @@ SocketInfo tryOpenSocket(struct addrinfo* info) {
     return result;
 }
 
+pthread_cond_t condVar = PTHREAD_COND_INITIALIZER;
+pthread_mutex_t mutex;
+
+typedef struct {
+    CpuLoad* load;
+} SyncData;
+
 void* netTreadMain(void* param) {
+    SyncData* syncData = (SyncData*)param;
+
     struct addrinfo hints;
     memset(&hints, 0, sizeof(hints));
     hints.ai_family =  AF_INET;
@@ -67,9 +77,32 @@ void* netTreadMain(void* param) {
     }
     syncPrint("Soocket openning succeed\n");
 
+    while (running) {
+        pthread_mutex_lock(&mutex);
+        while (syncData->load == NULL) {
+            pthread_cond_wait(&condVar, &mutex);
+        }
+        CpuLoad* load = syncData->load;
+        syncData->load = NULL;
+        pthread_mutex_unlock(&mutex);
+
+        printf("load = %p\n", load);
+        printf("%.2f:", load->all);
+        for (int i = 0; i < load->coreCount; ++i) {
+            printf(" %.2f", load->cores[i]);
+        }
+        printf("\n");
+
+        free(load);
+    }
+
     close(info.socket);
     freeaddrinfo(result);
     return NULL;
+}
+
+SyncData* allocSyncData() {
+    return (SyncData*)malloc(sizeof(SyncData));
 }
 
 int main() {
@@ -78,8 +111,12 @@ int main() {
 
     signal(SIGINT, handleSignal);
 
+    pthread_mutex_init(&mutex, NULL);
+
+    SyncData* syncData = allocSyncData();
+
     pthread_t netThread;
-    pthread_create(&netThread, NULL, netTreadMain, NULL);
+    pthread_create(&netThread, NULL, netTreadMain, syncData);
 
     CpuInfo first;
     if (readProcStat(&first) != 0) {
@@ -98,12 +135,21 @@ int main() {
             goto clearup;
         }
 
-        CpuLoad load = calculateCpuLoad(previous, current);
-        printf("%.2f:", load.all);
-        for (int i = 0; i < load.coreCount; ++i) {
-            printf(" %.2f", load.cores[i]);
+        CpuLoad* load = (CpuLoad*)malloc(sizeof(CpuLoad));
+        *load = calculateCpuLoad(previous, current);
+
+        while (1) {
+            pthread_mutex_lock(&mutex);
+            if (syncData->load) {
+                pthread_cond_signal(&condVar);
+                pthread_mutex_unlock(&mutex);
+                continue;
+            }
+            syncData->load = load;
+            pthread_cond_signal(&condVar);
+            pthread_mutex_unlock(&mutex);
+            break;
         }
-        printf("\n");
 
         CpuInfo* tmp = current;
         current = previous;
@@ -111,8 +157,12 @@ int main() {
     }
 
 clearup:
-    printf("before join");
+    printf("before join\n");
     pthread_join(netThread, &threadResult);
+
+    free(syncData);
+
+    pthread_mutex_destroy(&mutex);
 
     return 0;
 }
