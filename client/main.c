@@ -76,17 +76,7 @@ int main() {
     int result = 0;
     void* threadResult;
 
-    struct sigaction act;
-
-    act.sa_handler = handleSignal;
-    sigemptyset(&act.sa_mask);
-    act.sa_flags = 0;
-
-    // Register the handler for the SIGINT signal (Ctrl+C)
-    if (sigaction(SIGINT, &act, NULL) < 0) {
-        perror("sigaction failed");
-        return 1;
-    }
+    signal(SIGINT, handleSignal);
 
     pthread_t netThread;
     pthread_create(&netThread, NULL, netTreadMain, NULL);
