@@ -58,6 +58,9 @@ typedef struct {
     CpuLoad* load;
 } SyncData;
 
+SyncData* allocSyncData() {
+    return (SyncData*)malloc(sizeof(SyncData));
+}
 
 void* netTreadMain(void* param) {
     SyncData* syncData = (SyncData*)param;
@@ -107,10 +110,6 @@ void* netTreadMain(void* param) {
     close(info.socket);
     freeaddrinfo(result);
     return NULL;
-}
-
-SyncData* allocSyncData() {
-    return (SyncData*)malloc(sizeof(SyncData));
 }
 
 int main() {
