@@ -11,8 +11,9 @@ add_executable(
     main.c
     parse.c
     load.c
+    serialize.c
 )
 
 include_directories(".")
 
-target_link_libraries(client PRIVATE Threads::Threads)
+target_link_libraries(client PRIVATE Threads::Threads m)

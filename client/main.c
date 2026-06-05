@@ -9,9 +9,12 @@
 
 #include <parse.h>
 #include <load.h>
+#include <serialize.h>
 
 #define CAN_NOT_WRITE_CHARS 1
 #define BUFFER_OVERFLOW 2
+
+#define MAX_MSG_LEN 1024
 
 volatile sig_atomic_t running = 1;
 
@@ -55,8 +58,10 @@ typedef struct {
     CpuLoad* load;
 } SyncData;
 
+
 void* netTreadMain(void* param) {
     SyncData* syncData = (SyncData*)param;
+    char msg[MAX_MSG_LEN] = {};
 
     struct addrinfo hints;
     memset(&hints, 0, sizeof(hints));
@@ -86,12 +91,15 @@ void* netTreadMain(void* param) {
         syncData->load = NULL;
         pthread_mutex_unlock(&mutex);
 
-        printf("load = %p\n", load);
-        printf("%.2f:", load->all);
-        for (int i = 0; i < load->coreCount; ++i) {
-            printf(" %.2f", load->cores[i]);
-        }
-        printf("\n");
+        const int msgLen = serializeCpuLoadTo(load, msg, MAX_MSG_LEN);
+        const int sent = sendto(
+                info.socket,
+                msg,
+                msgLen,
+                0,
+                info.info->ai_addr,
+                info.info->ai_addrlen
+        );
 
         free(load);
     }
