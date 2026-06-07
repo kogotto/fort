@@ -12,7 +12,6 @@ int main(int argc, char* argv[]) {
     QObject::connect(netThread, &QThread::finished, netThread, &QThread::deleteLater);
     NetWorker* worker = new NetWorker{};
     worker->moveToThread(netThread);
-    QObject::connect(netThread, &QThread::started, worker, &NetWorker::run);
     QObject::connect(worker, &NetWorker::finished, netThread, &QThread::quit);
     QObject::connect(worker, &NetWorker::finished, worker, &QObject::deleteLater);
     QObject::connect(worker, &NetWorker::dataReady, &window, &MainWindow::dataReady);
