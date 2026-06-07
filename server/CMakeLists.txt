@@ -11,7 +11,7 @@ add_executable(
     main.cpp
     qcustomplot.cpp
     MainWindow.cpp
-    NetThread.cpp
+    NetWorker.cpp
     SyncFlag.cpp
 )
 

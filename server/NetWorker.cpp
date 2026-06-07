@@ -1,4 +1,4 @@
-#include <NetThread.hpp>
+#include <NetWorker.hpp>
 
 #include <QThread>
 

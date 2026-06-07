@@ -2,7 +2,7 @@
 
 #include <MainWindow.hpp>
 #include <QThread>
-#include <NetThread.hpp>
+#include <NetWorker.hpp>
 
 int main(int argc, char* argv[]) {
     QApplication app{argc, argv};
