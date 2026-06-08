@@ -18,14 +18,19 @@ NetWorker::NetWorker(QObject* parent)
 }
 
 void NetWorker::processData() {
-    char msg[MAX_MSG_SIZE];
-    const int result = socket->readDatagram(
-            msg,
-            MAX_MSG_SIZE - 1
-            );
-    if (result == -1) {
+    if (sync::running) {
+        char msg[MAX_MSG_SIZE];
+        const int result = socket->readDatagram(
+                msg,
+                MAX_MSG_SIZE - 1
+                );
+        if (result == -1) {
+            return;
+        }
+        msg[result] = '\0';
+        emit dataReady(deserializeLoad(msg));
         return;
     }
-    msg[result] = '\0';
-    emit dataReady(deserializeLoad(msg));
+
+    emit finished();
 }
