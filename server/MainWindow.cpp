@@ -1,6 +1,8 @@
 #include <MainWindow.hpp>
 
 #include <QHBoxLayout>
+#include <QPen>
+
 #include <SyncFlag.hpp>
 
 namespace {
@@ -8,6 +10,22 @@ namespace {
 int now() {
     static int tick = 0;
     return tick++;
+}
+
+constexpr size_t colorsCount = 8;
+QColor colors[colorsCount] = {
+    QColor{255, 0, 0, 255},
+    QColor{0, 255, 0, 255},
+    QColor{255, 255, 0, 255},
+    QColor{255, 0, 255, 255},
+    QColor{0, 255, 255, 255},
+    QColor{255, 255, 255, 255},
+    QColor{127, 127, 0, 255},
+    QColor{0, 127, 127, 255},
+};
+
+const QColor& getColor(int i) {
+    return colors[i % colorsCount];
 }
 
 } // namespace
@@ -69,6 +87,8 @@ void MainWindow::updatePlot() {
 
 void MainWindow::addGraphsIfNeaded(int newSize) {
     for (int i = plot->graphCount() - 1; i < newSize; ++i) {
-        plot->addGraph();
+        QCPGraph* graph = plot->addGraph();
+        QPen pen{getColor(i)};
+        graph->setPen(pen);
     }
 }
