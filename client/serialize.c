@@ -16,10 +16,10 @@ CoreLoad restoreLoad(ConvertedLoad load) {
 
 int serializeCpuLoadTo(CpuLoad* load, char* buf, int max) {
     int writed = 0;
-    writed += sprintf(buf + writed, "%d", convertLoad(load->all));
+    writed += sprintf(buf + writed, "%u", convertLoad(load->all));
     writed += sprintf(buf + writed, " %d", load->coreCount);
     for (int i = 0; i < load->coreCount; ++i) {
-        writed += sprintf(buf + writed, " %d", convertLoad(load->cores[i]));
+        writed += sprintf(buf + writed, " %u", convertLoad(load->cores[i]));
     }
     return writed;
 }
