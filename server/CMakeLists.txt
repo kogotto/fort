@@ -18,6 +18,7 @@ add_executable(
     MainWindow.cpp
     NetWorker.cpp
     SyncFlag.cpp
+    deserialize.cpp
 )
 
 include_directories(".")

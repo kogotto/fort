@@ -3,14 +3,28 @@
 #include <QHBoxLayout>
 #include <SyncFlag.hpp>
 
+namespace {
+
+int now() {
+    static int tick = 0;
+    return tick++;
+}
+
+} // namespace
+
 MainWindow::MainWindow(QWidget* parent)
     : QWidget(parent)
 {
     setupUi();
+
+    plot->addGraph();
+    plot->xAxis->setRange(0, 100);
+    plot->yAxis->setRange(0, 100);
 }
 
-void MainWindow::dataReady(QString msg) {
-    setWindowTitle(msg);
+void MainWindow::dataReady(Load load) {
+    addDataPiece(load);
+    updatePlot();
     update();
 }
 
@@ -25,4 +39,36 @@ void MainWindow::setupUi() {
     plot = new QCustomPlot(this);
     layout->addWidget(plot);
     setWindowTitle("CPU monitor");
+}
+
+void MainWindow::addDataPiece(const Load& load) {
+    if (!plotData) {
+        plotData.emplace();
+        plotData->cores.resize(load.cores.size());
+    }
+
+    plotData->time.emplace_back(now());
+    plotData->all.emplace_back(load.all);
+    for (int i = 0; i < load.cores.size(); ++i) {
+        plotData->cores[i].emplace_back(load.cores[i]);
+    }
+}
+
+void MainWindow::updatePlot() {
+    if (!plotData) {
+        return;
+    }
+
+    plot->graph(0)->setData(plotData->time, plotData->all);
+    addGraphsIfNeaded(plotData->cores.size());
+    for (int i = 0; i < plotData->cores.size(); ++i)
+        plot->graph(i + 1)->setData(plotData->time, plotData->cores[i]);
+
+    plot->replot();
+}
+
+void MainWindow::addGraphsIfNeaded(int newSize) {
+    for (int i = plot->graphCount() - 1; i < newSize; ++i) {
+        plot->addGraph();
+    }
 }

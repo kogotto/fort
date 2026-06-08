@@ -27,5 +27,5 @@ void NetWorker::processData() {
         return;
     }
     msg[result] = '\0';
-    emit dataReady(QString(msg));
+    emit dataReady(deserializeLoad(msg));
 }

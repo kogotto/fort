@@ -4,12 +4,14 @@
 #include <QString>
 #include <QUdpSocket>
 
+#include <deserialize.hpp>
+
 class NetWorker : public QObject {
 Q_OBJECT
 public:
     NetWorker(QObject* parent = nullptr);
 signals:
-    void dataReady(QString msg);
+    void dataReady(Load load);
     void finished();
 private slots:
     void processData();
